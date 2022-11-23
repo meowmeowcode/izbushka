@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  clickhouse:
+    image: "clickhouse/clickhouse-server:22.6.1-alpine"
+    ports:
+      - "8123:8123"
+    environment:
+      CLICKHOUSE_DB: izbushka
+      CLICKHOUSE_USER: izbushka
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+      CLICKHOUSE_PASSWORD: izbushka
+    volumes:
+      - ${PWD}/clickhouse.xml:/etc/clickhouse-server/users.xml
