@@ -31,3 +31,24 @@ class Migrator:
                 raise ex
             else:
                 self.migrations_repo.save(MigrationRecord.done(migration))
+
+    def get_status(self) -> list[dict]:
+        self.migrations_repo.initialize()
+        migrations = self.migrations_loader.get_all()
+        migration_records = self.migrations_repo.get_all()
+
+        records_dict = {(r.version, r.name): r for r in migration_records}
+
+        return [
+            {
+                "version": m.version,
+                "name": m.name,
+                "type": m.type_.name,
+                "status": (
+                    records_dict[(m.version, m.name)].status.name
+                    if (m.version, m.name) in records_dict
+                    else "pending"
+                ),
+            }
+            for m in migrations
+        ]

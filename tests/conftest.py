@@ -3,6 +3,7 @@ import pytest  # type: ignore
 from clickhouse_connect.driver import Client  # type: ignore
 
 from izbushka.base import (
+    Migration,
     MigrationsLoader,
     MigrationsRepo,
 )
@@ -27,6 +28,22 @@ def migrations_loader() -> MigrationsLoader:
     from . import migrations
 
     return PackageMigrationsLoader(migrations)
+
+
+@pytest.fixture
+def broken_migrations_loader() -> MigrationsLoader:
+    from . import migrations
+
+    def broken_migration(client: Client) -> None:
+        raise RuntimeError("test")
+
+    class BrokenMigrationsLoader(PackageMigrationsLoader):
+        def get_all(self) -> list[Migration]:
+            result = super().get_all()
+            result[2].run = broken_migration
+            return result
+
+    return BrokenMigrationsLoader(migrations)
 
 
 @pytest.fixture
