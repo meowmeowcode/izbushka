@@ -4,6 +4,7 @@ from .base import (
     MigrationRecord,
     MigrationsLoader,
     MigrationsRepo,
+    MigrationStatus,
 )
 
 
@@ -36,19 +37,28 @@ class Migrator:
         self.migrations_repo.initialize()
         migrations = self.migrations_loader.get_all()
         migration_records = self.migrations_repo.get_all()
-
         records_dict = {(r.version, r.name): r for r in migration_records}
+        result = []
 
-        return [
-            {
+        for m in migrations:
+            data = {
                 "version": m.version,
                 "name": m.name,
                 "type": m.type_.name,
-                "status": (
-                    records_dict[(m.version, m.name)].status.name
-                    if (m.version, m.name) in records_dict
-                    else "pending"
-                ),
             }
-            for m in migrations
-        ]
+
+            try:
+                record = records_dict[(m.version, m.name)]
+            except KeyError:
+                data["status"] = "pending"
+            else:
+                data["status"] = record.status.name
+                if (
+                    record.status == MigrationStatus.in_progress
+                    and m.get_progress is not None
+                ):
+                    data["progress"] = m.get_progress(self.client)
+
+            result.append(data)
+
+        return result

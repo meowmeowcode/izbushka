@@ -24,6 +24,7 @@ def test_get_all(migrations_loader: MigrationsLoader) -> None:
             name="populate_events",
             type_=MigrationType.data,
             run=populate_events.run,
+            get_progress=populate_events.get_progress,
         ),
         Migration(
             version="v2",

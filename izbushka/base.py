@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import (
     Callable,
+    Optional,
     Protocol,
 )
 
@@ -28,7 +29,7 @@ class Migration:
     name: str
     type_: MigrationType
     run: Callable
-    # get_progress: Optional[Callable]
+    get_progress: Optional[Callable] = None
 
 
 @dataclass

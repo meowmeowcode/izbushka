@@ -47,9 +47,10 @@ class PackageMigrationsLoader:
         return [
             Migration(
                 name=m.__name__.split(".")[-1],
-                run=m.run,
                 version=version,
                 type_=type_,
+                run=m.run,
+                get_progress=getattr(m, "get_progress", None),
             )
             for m in modules
             if hasattr(m, "run")

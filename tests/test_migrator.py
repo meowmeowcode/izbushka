@@ -1,7 +1,11 @@
 import pytest  # type: ignore
 from clickhouse_connect.driver import Client  # type: ignore
 
-from izbushka.base import MigrationsLoader
+from izbushka.base import (
+    MigrationRecord,
+    MigrationsLoader,
+    MigrationsRepo,
+)
 from izbushka.migrator import Migrator
 
 
@@ -90,3 +94,22 @@ def test_status_with_failed_migration(
             "status": "pending",
         },
     ]
+
+
+def test_progress(
+    migrator: Migrator,
+    migrations_loader: MigrationsLoader,
+    migrations_repo: MigrationsRepo,
+) -> None:
+    migrations = migrations_loader.get_all()
+    migrations_repo.initialize()
+    migrations_repo.save(MigrationRecord.done(migrations[0]))
+    migrations_repo.save(MigrationRecord.in_progress(migrations[1]))
+
+    assert migrator.get_status()[1] == {
+        "version": "v1",
+        "name": "populate_events",
+        "type": "data",
+        "status": "in_progress",
+        "progress": "50%",
+    }
