@@ -4,10 +4,16 @@ import enum
 from dataclasses import dataclass
 from enum import Enum
 from typing import (
+    Any,
     Callable,
+    Iterable,
     Optional,
     Protocol,
+    Sequence,
+    Union,
 )
+
+from . import sql
 
 
 class MigrationStatus(Enum):
@@ -80,4 +86,37 @@ class MigrationsRepo(Protocol):
         ...
 
     def save(self, record: MigrationRecord) -> None:
+        ...
+
+
+@dataclass
+class Config:
+    host: str
+    port: int
+    username: str
+    password: str
+    database: str
+    interface: str = "http"
+    cluster: Optional[str] = None
+
+
+class Operations(Protocol):
+    config: Config
+
+    @property
+    def client(self) -> Any:
+        ...
+
+    def command(self, query: Union[str, sql.Query]) -> Union[str, int, Sequence[str]]:
+        ...
+
+    def query(self, query: Union[str, sql.Query]) -> Sequence[Sequence]:
+        ...
+
+    def insert(
+        self,
+        table: Union[str, sql.Table],
+        data: Sequence[Sequence],
+        column_names: Union[str, Iterable[str]] = "*",
+    ) -> None:
         ...

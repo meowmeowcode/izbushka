@@ -1,9 +1,10 @@
-from clickhouse_connect.driver import Client  # type: ignore
+from izbushka import (
+    Operations,
+    sql,
+)
 
-from izbushka import sql
 
-
-def run(client: Client) -> None:
+def run(op: Operations) -> None:
     query = (
         sql.Query.create_table("events")
         .columns(
@@ -14,4 +15,4 @@ def run(client: Client) -> None:
         .order_by("timestamp")
     )
 
-    client.command(str(query))
+    op.command(query)

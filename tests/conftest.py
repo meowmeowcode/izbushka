@@ -1,7 +1,9 @@
-import clickhouse_connect  # type: ignore
 import pytest  # type: ignore
-from clickhouse_connect.driver import Client  # type: ignore
 
+from izbushka import (
+    Config,
+    Operations,
+)
 from izbushka.base import (
     Migration,
     MigrationsLoader,
@@ -10,17 +12,23 @@ from izbushka.base import (
 from izbushka.migrations_loader import PackageMigrationsLoader
 from izbushka.migrations_repo import DBMigrationsRepo
 from izbushka.migrator import Migrator
+from izbushka.operations import ClickHouseConnectOperations
 
 
 @pytest.fixture
-def client():
-    return clickhouse_connect.get_client(
+def config() -> Config:
+    return Config(
         host="localhost",
         port=8123,
         username="izbushka",
         password="izbushka",
         database="izbushka",
     )
+
+
+@pytest.fixture
+def operations(config: Config) -> Operations:
+    return ClickHouseConnectOperations(config)
 
 
 @pytest.fixture
@@ -34,7 +42,7 @@ def migrations_loader() -> MigrationsLoader:
 def broken_migrations_loader() -> MigrationsLoader:
     from . import migrations
 
-    def broken_migration(client: Client) -> None:
+    def broken_migration(op: Operations) -> None:
         raise RuntimeError("test")
 
     class BrokenMigrationsLoader(PackageMigrationsLoader):
@@ -47,25 +55,25 @@ def broken_migrations_loader() -> MigrationsLoader:
 
 
 @pytest.fixture
-def migrations_repo(client: Client) -> MigrationsRepo:
-    return DBMigrationsRepo(client)
+def migrations_repo(operations: Operations) -> MigrationsRepo:
+    return DBMigrationsRepo(operations)
 
 
 @pytest.fixture
 def migrator(
     migrations_loader: MigrationsLoader,
     migrations_repo: MigrationsRepo,
-    client: Client,
+    operations: Operations,
 ) -> Migrator:
     return Migrator(
         migrations_loader=migrations_loader,
         migrations_repo=migrations_repo,
-        client=client,
+        operations=operations,
     )
 
 
 @pytest.fixture(autouse=True)
-def clean_db(client) -> None:
-    client.command("DROP TABLE IF EXISTS izbushka_migrations")
-    client.command("DROP TABLE IF EXISTS events")
-    client.command("DROP TABLE IF EXISTS events_tmp")
+def clean_db(operations: Operations) -> None:
+    operations.command("DROP TABLE IF EXISTS izbushka_migrations")
+    operations.command("DROP TABLE IF EXISTS events")
+    operations.command("DROP TABLE IF EXISTS events_tmp")

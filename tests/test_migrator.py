@@ -1,19 +1,19 @@
 import pytest  # type: ignore
-from clickhouse_connect.driver import Client  # type: ignore
 
 from izbushka.base import (
     MigrationRecord,
     MigrationsLoader,
     MigrationsRepo,
+    Operations,
 )
 from izbushka.migrator import Migrator
 
 
-def test_run(migrator: Migrator, client: Client) -> None:
+def test_run(migrator: Migrator, operations: Operations) -> None:
     migrator.run()
-    rows = client.query("SELECT entity, action FROM events")
+    rows = operations.query("SELECT entity, action FROM events")
 
-    assert rows.result_set == [
+    assert rows == [
         ("user", "create"),
         ("user", "delete"),
     ]

@@ -1,13 +1,13 @@
-from clickhouse_connect.driver import Client  # type: ignore
+from izbushka import Operations
 
 
-def run(client: Client) -> None:
+def run(op: Operations) -> None:
     rows = [
         ["user.create"],
         ["user.delete"],
     ]
-    client.insert("events", rows, column_names=["operation"])
+    op.insert("events", rows, column_names=["operation"])
 
 
-def get_progress(client: Client) -> str:
+def get_progress(op: Operations) -> str:
     return "50%"

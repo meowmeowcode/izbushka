@@ -1,10 +1,9 @@
-from clickhouse_connect.driver import Client  # type: ignore
-
 from .base import (
     MigrationRecord,
     MigrationsLoader,
     MigrationsRepo,
     MigrationStatus,
+    Operations,
 )
 
 
@@ -13,11 +12,11 @@ class Migrator:
         self,
         migrations_loader: MigrationsLoader,
         migrations_repo: MigrationsRepo,
-        client: Client,
+        operations: Operations,
     ) -> None:
         self.migrations_loader = migrations_loader
         self.migrations_repo = migrations_repo
-        self.client = client
+        self.operations = operations
 
     def run(self) -> None:
         self.migrations_repo.initialize()
@@ -26,7 +25,7 @@ class Migrator:
         for migration in migrations:
             self.migrations_repo.save(MigrationRecord.in_progress(migration))
             try:
-                migration.run(self.client)
+                migration.run(self.operations)
             except Exception as ex:
                 self.migrations_repo.save(MigrationRecord.failed(migration))
                 raise ex
@@ -57,7 +56,7 @@ class Migrator:
                     record.status == MigrationStatus.in_progress
                     and m.get_progress is not None
                 ):
-                    data["progress"] = m.get_progress(self.client)
+                    data["progress"] = m.get_progress(self.operations)
 
             result.append(data)
 

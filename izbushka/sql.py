@@ -49,9 +49,7 @@ class Query(_dialects.ClickHouseQuery):
         return _ClickHouseCreateQueryBuilder().create_table(table)
 
     @classmethod
-    def exchange_tables(
-        cls, table1: str, table2: str
-    ) -> _ClickHouseExchangeQueryBuilder:
+    def exchange_tables(cls, table1: str, table2: str) -> Query:
         return _ClickHouseExchangeQueryBuilder().exchange_tables(table1, table2)
 
 
