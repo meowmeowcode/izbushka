@@ -1,5 +1,8 @@
 from clickhouse_connect.driver import Client  # type: ignore
 
+from izbushka import sql
+
 
 def run(client: Client) -> None:
-    client.command("DROP TABLE events_tmp")
+    query = sql.Query.drop_table("events_tmp")
+    client.command(str(query))

@@ -560,6 +560,14 @@ python-versions = ">=3.6.8"
 diagrams = ["railroad-diagrams", "jinja2"]
 
 [[package]]
+name = "pypika"
+version = "0.48.9"
+description = "A SQL query builder API for Python"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "pyrsistent"
 version = "0.19.2"
 description = "Persistent/Functional/Immutable data structures"
@@ -737,7 +745,7 @@ six = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "34826c0d90cb2816a083a01a17c02f9d47a1118ce274cbba28fb3f4b8f53985d"
+content-hash = "bb4c2943311b59f125c1c4eb7f382d7719f80157e8501450267a3b981baca467"
 
 [metadata.files]
 appnope = [
@@ -850,6 +858,9 @@ pynacl = [
 pyparsing = [
     {file = "pyparsing-3.0.9-py3-none-any.whl", hash = "sha256:5026bae9a10eeaefb61dab2f09052b9f4307d44aee4eda64b309723d8d206bbc"},
     {file = "pyparsing-3.0.9.tar.gz", hash = "sha256:2b020ecf7d21b687f219b71ecad3631f644a47f01403fa1d1036b0c6416d70fb"},
+]
+pypika = [
+    {file = "PyPika-0.48.9.tar.gz", hash = "sha256:838836a61747e7c8380cd1b7ff638694b7a7335345d0f559b04b2cd832ad5378"},
 ]
 pyrsistent = []
 pytest = [

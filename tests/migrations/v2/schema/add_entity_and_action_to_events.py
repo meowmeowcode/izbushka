@@ -1,15 +1,19 @@
 from clickhouse_connect.driver import Client  # type: ignore
 
+from izbushka import sql
+
 
 def run(client: Client) -> None:
-    client.command(
-        """
-            CREATE table events_tmp (
-                entity String,
-                action String,
-                timestamp DateTime64(6, 'UTC') DEFAULT now('UTC')
-            ) ENGINE MergeTree ORDER BY timestamp
-        """
+    query = (
+        sql.Query.create_table("events_tmp")
+        .columns(
+            sql.Column("entity", "String"),
+            sql.Column("action", "String"),
+            sql.Column("timestamp", "DateTime64(6, 'UTC') DEFAULT now('UTC')"),
+        )
+        .engine("MergeTree")
+        .order_by("timestamp")
     )
 
-    client.command("EXCHANGE TABLES events_tmp AND events")
+    client.command(str(query))
+    client.command(str(sql.Query.exchange_tables("events_tmp", "events")))
