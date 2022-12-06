@@ -20,7 +20,14 @@ class Migrator:
 
     def run(self) -> None:
         self.migrations_repo.initialize()
-        migrations = self.migrations_loader.get_all()
+        migration_records = self.migrations_repo.get_all()
+        done_migrations = {(r.version, r.name, r.type_) for r in migration_records}
+
+        migrations = [
+            m
+            for m in self.migrations_loader.get_all()
+            if (m.version, m.name, m.type_) not in done_migrations
+        ]
 
         for migration in migrations:
             self.migrations_repo.save(MigrationRecord.in_progress(migration))

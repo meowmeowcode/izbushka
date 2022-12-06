@@ -19,6 +19,19 @@ def test_run(migrator: Migrator, operations: Operations) -> None:
     ]
 
 
+def test_double_run(migrator: Migrator, operations: Operations) -> None:
+    migrator.run()
+
+    error = None
+
+    try:
+        migrator.run()
+    except Exception as e:
+        error = e
+
+    assert error is None
+
+
 def test_status(migrator: Migrator) -> None:
     assert migrator.get_status() == [
         {
