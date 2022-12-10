@@ -16,6 +16,10 @@ from typing import (
 from . import sql
 
 
+class OperationError(Exception):
+    pass
+
+
 class MigrationStatus(Enum):
     pending = enum.auto()
     in_progress = enum.auto()
@@ -118,5 +122,18 @@ class Operations(Protocol):
         table: Union[str, sql.Table],
         data: Sequence[Sequence],
         column_names: Union[str, Iterable[str]] = "*",
+    ) -> None:
+        ...
+
+
+class MigrationsGenerator(Protocol):
+    def initialize(self) -> None:
+        ...
+
+    def new_version(self, name: str) -> None:
+        ...
+
+    def new_migration(
+        self, name: str, type_: MigrationType = MigrationType.schema
     ) -> None:
         ...
