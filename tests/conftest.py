@@ -1,18 +1,22 @@
+import shutil
+from pathlib import Path
+from typing import Generator
+
 import pytest  # type: ignore
 
 from izbushka import (
     Config,
     Operations,
 )
-from izbushka.base import (
-    Migration,
-    MigrationsLoader,
+from izbushka.entities import Migration
+from izbushka.migrations_repo import MigrationsPackageRepo
+from izbushka.history_repo import HistoryDBRepo
+from izbushka.migrations_service import MigrationsService
+from izbushka.operations import ClickHouseConnectOperations
+from izbushka.protocols import (
+    HistoryRepo,
     MigrationsRepo,
 )
-from izbushka.migrations_loader import PackageMigrationsLoader
-from izbushka.migrations_repo import DBMigrationsRepo
-from izbushka.migrator import Migrator
-from izbushka.operations import ClickHouseConnectOperations
 
 
 @pytest.fixture
@@ -32,48 +36,87 @@ def operations(config: Config) -> Operations:
 
 
 @pytest.fixture
-def migrations_loader() -> MigrationsLoader:
-    from . import migrations
-
-    return PackageMigrationsLoader(migrations)
+def migrations_path() -> str:
+    return "tests.migrations"
 
 
 @pytest.fixture
-def broken_migrations_loader() -> MigrationsLoader:
-    from . import migrations
+def migrations_repo(migrations_path: str) -> MigrationsRepo:
+    return MigrationsPackageRepo(migrations_path)
 
+
+@pytest.fixture
+def broken_migrations_repo(migrations_path: str) -> MigrationsRepo:
     def broken_migration(op: Operations) -> None:
         raise RuntimeError("test")
 
-    class BrokenMigrationsLoader(PackageMigrationsLoader):
+    class BrokenMigrationsRepo(MigrationsPackageRepo):
         def get_all(self) -> list[Migration]:
             result = super().get_all()
             result[2].run = broken_migration
             return result
 
-    return BrokenMigrationsLoader(migrations)
+    return BrokenMigrationsRepo(migrations_path)
 
 
 @pytest.fixture
-def migrations_repo(operations: Operations) -> MigrationsRepo:
-    return DBMigrationsRepo(operations)
+def new_migrations_package() -> str:
+    return "tests.new_migrations"
 
 
 @pytest.fixture
-def migrator(
-    migrations_loader: MigrationsLoader,
+def new_migrations_path(new_migrations_package: str) -> Generator[Path, None, None]:
+    path = Path(*new_migrations_package.split("."))
+
+    if path.exists():
+        shutil.rmtree(path)
+
+    path.mkdir()
+    (path / "__init__.py").touch()
+    yield path
+    shutil.rmtree(path)
+
+
+@pytest.fixture
+def new_migrations_repo(
+    new_migrations_package: str, new_migrations_path: Path
+) -> MigrationsRepo:
+    return MigrationsPackageRepo(new_migrations_package)
+
+
+@pytest.fixture
+def history_repo(operations: Operations) -> HistoryRepo:
+    return HistoryDBRepo(operations)
+
+
+@pytest.fixture
+def migrations_service(
     migrations_repo: MigrationsRepo,
+    history_repo: HistoryRepo,
     operations: Operations,
-) -> Migrator:
-    return Migrator(
-        migrations_loader=migrations_loader,
+) -> MigrationsService:
+    return MigrationsService(
         migrations_repo=migrations_repo,
+        history_repo=history_repo,
+        operations=operations,
+    )
+
+
+@pytest.fixture
+def new_migrations_service(
+    new_migrations_repo: MigrationsRepo,
+    history_repo: HistoryRepo,
+    operations: Operations,
+) -> MigrationsService:
+    return MigrationsService(
+        migrations_repo=new_migrations_repo,
+        history_repo=history_repo,
         operations=operations,
     )
 
 
 @pytest.fixture(autouse=True)
 def clean_db(operations: Operations) -> None:
-    operations.command("DROP TABLE IF EXISTS izbushka_migrations")
+    operations.command("DROP TABLE IF EXISTS izbushka_history")
     operations.command("DROP TABLE IF EXISTS events")
     operations.command("DROP TABLE IF EXISTS events_tmp")

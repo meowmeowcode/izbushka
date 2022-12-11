@@ -7,11 +7,7 @@ from typing import (
 
 import clickhouse_connect  # type: ignore
 
-from .base import (
-    Config,
-    Operations,
-)
-
+from .entities import Config
 from . import sql
 
 

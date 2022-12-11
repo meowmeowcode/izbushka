@@ -1,58 +1,86 @@
-from .base import (
-    MigrationRecord,
-    MigrationStatus,
+import importlib
+from pathlib import Path
+import pkgutil
+from types import ModuleType
+
+from .entities import (
+    Migration,
+    MigrationInfo,
     MigrationType,
-    Operations,
+    NewMigration,
 )
 
+from .errors import OperationError
 
-class DBMigrationsRepo:
-    table = "izbushka_migrations"
 
-    def __init__(self, operations: Operations) -> None:
-        self.operations = operations
+class MigrationsPackageRepo:
+    def __init__(self, package: str) -> None:
+        self.package = pkgutil.resolve_name(package)
+        self.path = Path(*self.package.__path__)
 
-    def initialize(self) -> None:
-        self.operations.command(
-            f"""
-                CREATE TABLE IF NOT EXISTS {self.table} (
-                    name String,
-                    version String,
-                    status String,
-                    type String,
-                    timestamp DateTime64(9, 'UTC') DEFAULT now64(9, 'UTC')
-                ) ENGINE MergeTree ORDER BY timestamp
-            """
-        )
+    def get_all(self) -> list[Migration]:
+        result = []
 
-    def get_all(self) -> list[MigrationRecord]:
-        result = self.operations.query(
-            f"""
-                SELECT name, version, status, type
-                FROM {self.table} as t1
-                JOIN (
-                    SELECT MAX(timestamp) as ts
-                    FROM {self.table}
-                    GROUP BY name, version, type
-                ) as t2
-                ON t1.timestamp = t2.ts
-                ORDER BY version, name, type
-            """
-        )
-
-        return [
-            MigrationRecord(
-                name=name,
-                version=version,
-                status=MigrationStatus[status],
-                type_=MigrationType[type_],
+        version_packages = [
+            p.name
+            for p in pkgutil.iter_modules(
+                self.package.__path__, f"{self.package.__name__}."
             )
-            for name, version, status, type_ in result
         ]
 
-    def save(self, record: MigrationRecord) -> None:
-        self.operations.insert(
-            self.table,
-            [(record.name, record.version, record.status.name, record.type_.name)],
-            column_names=("name", "version", "status", "type"),
-        )
+        for v in version_packages:
+            for type_ in MigrationType:
+                migrations = self._load_migrations(v, type_)
+                result.extend(migrations)
+
+        return result
+
+    @staticmethod
+    def _load_migrations(version_path: str, type_: MigrationType) -> list[Migration]:
+        version = version_path.split(".")[-1]
+        path = f"{version_path}.{type_.name}"
+
+        try:
+            package = pkgutil.resolve_name(path)
+        except AttributeError:
+            return []
+
+        modules = [
+            importlib.import_module(m.name)
+            for m in pkgutil.iter_modules(package.__path__, f"{path}.")
+        ]
+
+        return [
+            Migration(
+                info=MigrationInfo(
+                    version=version,
+                    type_=type_,
+                    name=m.__name__.split(".")[-1],
+                ),
+                run=m.run,
+                get_progress=getattr(m, "get_progress", None),
+            )
+            for m in modules
+            if hasattr(m, "run")
+        ]
+
+    def save(self, migration: NewMigration) -> None:
+        version_dir = self.path / migration.info.version
+
+        if not version_dir.exists():
+            version_dir.mkdir()
+            (version_dir / "__init__.py").touch()
+
+        last_version = sorted(self.path.iterdir())[-1]
+        type_dir = last_version / migration.info.type_.name
+
+        if not type_dir.exists():
+            type_dir.mkdir()
+            (type_dir / "__init__.py").touch()
+
+        migration_path = type_dir / f"{migration.info.name}.py"
+
+        if migration_path.exists():
+            raise OperationError("A migration with this name already exists")
+
+        migration_path.write_text(migration.code)
