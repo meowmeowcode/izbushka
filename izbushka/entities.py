@@ -35,8 +35,8 @@ class NewMigration:
         "from izbushka import Operations\n"
         "from izbushka import sql\n"
         "\n\n"
-        "def run(op: Operations) -> None:"
-        "    ...\n\n"
+        "def run(op: Operations) -> None:\n"
+        "    ...\n"
     )
 
     info: MigrationInfo
