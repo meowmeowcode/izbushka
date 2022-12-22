@@ -44,5 +44,5 @@ class ClickHouseConnectOperations:
         data: Sequence[Sequence],
         column_names: Union[str, Iterable[str]] = "*",
     ) -> None:
-        table_name = table if isinstance(table, str) else table.name
+        table_name = table if isinstance(table, str) else table.get_table_name()
         self.client.insert(table_name, data, column_names=column_names)

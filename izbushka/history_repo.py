@@ -1,3 +1,6 @@
+from pypika import functions as fn  # type: ignore
+
+from . import sql
 from .entities import (
     HistoryRecord,
     MigrationInfo,
@@ -8,38 +11,66 @@ from .protocols import Operations
 
 
 class HistoryDBRepo:
-    table = "izbushka_history"
+    table = sql.Table("izbushka_history")
+    local_table = sql.Table("izbushka_history_local")
 
     def __init__(self, operations: Operations) -> None:
         self.operations = operations
 
     def initialize(self) -> None:
+        cluster = self.operations.config.cluster
+
         self.operations.command(
-            f"""
-                CREATE TABLE IF NOT EXISTS {self.table} (
-                    version String,
-                    name String,
-                    type String,
-                    status String,
-                    timestamp DateTime64(9, 'UTC') DEFAULT now64(9, 'UTC')
-                ) ENGINE MergeTree ORDER BY timestamp
-            """
+            sql.Query.create_table(self.local_table if cluster else self.table)
+            .if_not_exists()
+            .on_cluster(cluster)
+            .columns(
+                sql.Column("name", "String"),
+                sql.Column("version", "String"),
+                sql.Column("type", "String"),
+                sql.Column("status", "String"),
+                sql.Column("timestamp", "DateTime64(9, 'UTC') DEFAULT now64(9, 'UTC')"),
+            )
+            .engine("ReplicatedMergeTree" if cluster else "MergeTree")
+            .order_by("timestamp")
         )
 
+        if cluster:
+            self.operations.command(
+                sql.Query.create_table(self.table)
+                .if_not_exists()
+                .on_cluster(cluster)
+                .as_table(
+                    f"{self.operations.config.database}.{self.local_table.get_table_name()}"
+                )
+                .engine(
+                    "Distributed",
+                    cluster,
+                    self.operations.config.database,
+                    self.local_table.get_table_name(),
+                    "rand()",
+                )
+            )
+
     def get_all(self) -> list[HistoryRecord]:
-        result = self.operations.query(
-            f"""
-                SELECT version, name, type, status
-                FROM {self.table} as t1
-                JOIN (
-                    SELECT MAX(timestamp) as ts
-                    FROM {self.table}
-                    GROUP BY name, version, type
-                ) as t2
-                ON t1.timestamp = t2.ts
-                ORDER BY version, name, type
-            """
+        t1 = self.table.as_("t1")
+        t2 = self.table.as_("t2")
+
+        max_timestamp_q = (
+            sql.Query.from_(t2)
+            .select(fn.Max(t2.timestamp).as_("ts"))
+            .groupby("name", "version", "type")
         )
+
+        query = (
+            sql.Query.from_(t1)
+            .select("version", "name", "type", "status")
+            .join(max_timestamp_q)
+            .on(t1.timestamp == max_timestamp_q.ts)
+            .orderby("version", "name", "type")
+        )
+
+        result = self.operations.query(query)
 
         return [
             HistoryRecord(

@@ -14,6 +14,11 @@ from izbushka.protocols import (
 )
 
 
+@pytest.fixture(autouse=True)
+def setup(clean_db: None) -> None:
+    pass
+
+
 def test_run(migrations_service: MigrationsService, operations: Operations) -> None:
     migrations_service.run()
     rows = operations.query("SELECT entity, action FROM events")

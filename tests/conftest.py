@@ -1,12 +1,16 @@
 import shutil
 from pathlib import Path
-from typing import Generator
+from typing import (
+    Any,
+    Generator,
+)
 
 import pytest  # type: ignore
 
 from izbushka import (
     Config,
     Operations,
+    sql,
 )
 from izbushka.entities import Migration
 from izbushka.migrations_repo import MigrationsPackageRepo
@@ -19,14 +23,15 @@ from izbushka.protocols import (
 )
 
 
-@pytest.fixture
-def config() -> Config:
+@pytest.fixture(params=(None, "test_shard_localhost"))
+def config(request: Any) -> Config:
     return Config(
         host="localhost",
         port=8123,
         username="izbushka",
         password="izbushka",
         database="izbushka",
+        cluster=request.param,
     )
 
 
@@ -115,8 +120,25 @@ def new_migrations_service(
     )
 
 
-@pytest.fixture(autouse=True)
-def clean_db(operations: Operations) -> None:
-    operations.command("DROP TABLE IF EXISTS izbushka_history")
-    operations.command("DROP TABLE IF EXISTS events")
-    operations.command("DROP TABLE IF EXISTS events_tmp")
+@pytest.fixture
+def clean_db(operations: Operations, config: Config) -> None:
+    operations.command(
+        sql.Query.drop_table("izbushka_history").if_exists().on_cluster(config.cluster)
+    )
+    operations.command(
+        sql.Query.drop_table("izbushka_history_local")
+        .if_exists()
+        .on_cluster(config.cluster)
+    )
+    operations.command(
+        sql.Query.drop_table("events").if_exists().on_cluster(config.cluster)
+    )
+    operations.command(
+        sql.Query.drop_table("events_local").if_exists().on_cluster(config.cluster)
+    )
+    operations.command(
+        sql.Query.drop_table("events_tmp").if_exists().on_cluster(config.cluster)
+    )
+    operations.command(
+        sql.Query.drop_table("events_local_tmp").if_exists().on_cluster(config.cluster)
+    )

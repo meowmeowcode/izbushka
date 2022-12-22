@@ -10,7 +10,7 @@ from izbushka.protocols import HistoryRepo
 
 
 @pytest.fixture(autouse=True)
-def setup(history_repo: HistoryRepo) -> None:
+def setup(clean_db: None, history_repo: HistoryRepo) -> None:
     history_repo.initialize()
 
 

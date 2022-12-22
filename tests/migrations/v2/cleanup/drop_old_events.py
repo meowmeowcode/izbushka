@@ -1,8 +1,14 @@
-from clickhouse_connect.driver import Client  # type: ignore
+from izbushka import (
+    Operations,
+    sql,
+)
 
-from izbushka import sql
 
+def run(op: Operations) -> None:
+    query = sql.Query.drop_table("events_tmp").on_cluster(op.config.cluster)
+    op.command(query)
 
-def run(client: Client) -> None:
-    query = sql.Query.drop_table("events_tmp")
-    client.command(str(query))
+    if op.config.cluster:
+        op.command(
+            sql.Query.drop_table("events_local_tmp").on_cluster(op.config.cluster)
+        )
