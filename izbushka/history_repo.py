@@ -41,7 +41,8 @@ class HistoryDBRepo:
                 .if_not_exists()
                 .on_cluster(cluster)
                 .as_table(
-                    f"{self.operations.config.database}.{self.local_table.get_table_name()}"
+                    f"{self.operations.config.database}."
+                    f"{self.local_table.get_table_name()}"
                 )
                 .engine(
                     "Distributed",

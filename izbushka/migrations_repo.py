@@ -1,7 +1,6 @@
 import importlib
 from pathlib import Path
 import pkgutil
-from types import ModuleType
 
 from .entities import (
     Migration,

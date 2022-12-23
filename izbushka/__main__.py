@@ -20,7 +20,7 @@ except FileNotFoundError:
 config = Config(
     host=os.getenv("CLICKHOUSE_HOST") or conf.get("host") or "localhost",
     port=int(os.getenv("CLICKHOUSE_PORT") or conf.get("port") or 8123),
-    username=os.getenv("CLICKHOUSE_USERNAME") or conf.get("username") or "Default",
+    username=(os.getenv("CLICKHOUSE_USERNAME") or conf.get("username") or "Default"),
     password=os.getenv("CLICKHOUSE_PASSWORD") or conf.get("password") or "",
     database=os.getenv("CLICKHOUSE_DATABASE") or conf.get("database") or "default",
     interface=os.getenv("CLICKHOUSE_INTERFACE") or conf.get("interface") or "http",

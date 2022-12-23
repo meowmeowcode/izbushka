@@ -10,8 +10,10 @@ from typing import (
 from pypika import (  # type: ignore
     Column,
     Table,
+    dialects as _dialects,
 )
-from pypika import dialects as _dialects  # type: ignore
+
+__all__ = ("Column", "Query", "Table")
 
 
 class Query(_dialects.ClickHouseQuery):
@@ -42,7 +44,9 @@ class _ClickHouseCreateQueryBuilder(_dialects.CreateQueryBuilder):
         self._cluster = cluster
 
     @_dialects.builder
-    def engine(self, engine: str, *args: str) -> _ClickHouseCreateQueryBuilder:  # type: ignore
+    def engine(  # type: ignore
+        self, engine: str, *args: str
+    ) -> _ClickHouseCreateQueryBuilder:
         if self._engine:
             raise AttributeError("'CreateQuery' object already has attribute engine")
         self._engine = engine
@@ -107,12 +111,18 @@ class _ClickHouseExchangeQueryBuilder:
         self._cluster: Optional[str] = None
 
     @_dialects.builder
-    def exchange_tables(self, table1: str, table2: str) -> _ClickHouseExchangeQueryBuilder:  # type: ignore
+    def exchange_tables(  # type: ignore
+        self,
+        table1: str,
+        table2: str,
+    ) -> _ClickHouseExchangeQueryBuilder:
         self._table1 = table1
         self._table2 = table2
 
     @_dialects.builder
-    def on_cluster(self, cluster: str) -> _ClickHouseExchangeQueryBuilder:  # type: ignore
+    def on_cluster(  # type: ignore
+        self, cluster: str
+    ) -> _ClickHouseExchangeQueryBuilder:
         if self._cluster:
             raise AttributeError("'ExchangeQuery' object already has attribute cluster")
 
