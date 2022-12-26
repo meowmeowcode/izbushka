@@ -1,3 +1,7 @@
+<p align="center">
+    <img src="https://github.com/meowmeowcode/izbushka/blob/main/docs/source/_static/izbushka.png" width="200" alt="misery" />
+</p>
+
 # izbushka
 
 A database migration tool for **ClickHouse** to write migrations code in **Python** using **PyPika**.
