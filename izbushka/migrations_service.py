@@ -82,13 +82,19 @@ class MigrationsService:
         if type_ is None:
             type_ = MigrationType.schema
 
-        if version is None:
-            migrations = self.migrations_repo.get_all()
+        migrations = self.migrations_repo.get_all()
 
+        if version is None:
             if not migrations:
                 raise OperationError("A version is required for the first migration")
 
             version = migrations[-1].info.version
+
+        if any(
+            (m.info.name, m.info.version, m.info.type_) == (name, version, type_)
+            for m in migrations
+        ):
+            raise OperationError("A migration with this name already exists")
 
         migration = NewMigration(
             info=MigrationInfo(

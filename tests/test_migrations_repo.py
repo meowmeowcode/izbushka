@@ -202,3 +202,39 @@ def test_new_migration_files(
 
     actual_files = sorted(new_migrations_path.rglob("*.py"))
     assert actual_files == expected_files
+
+
+def test_migrations_order(new_migrations_repo: MigrationsRepo) -> None:
+    m1 = NewMigration(
+        info=MigrationInfo(
+            version="v1",
+            type_=MigrationType.schema,
+            name="do_something",
+        )
+    )
+
+    m2 = NewMigration(
+        info=MigrationInfo(
+            version="v2",
+            type_=MigrationType.schema,
+            name="do_something",
+        )
+    )
+
+    m3 = NewMigration(
+        info=MigrationInfo(
+            version="v10",
+            type_=MigrationType.schema,
+            name="do_something",
+        )
+    )
+
+    new_migrations_repo.save(m1)
+    new_migrations_repo.save(m2)
+    new_migrations_repo.save(m3)
+
+    assert [m.info for m in new_migrations_repo.get_all()] == [
+        m1.info,
+        m2.info,
+        m3.info,
+    ]

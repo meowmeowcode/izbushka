@@ -2,14 +2,14 @@ import importlib
 from pathlib import Path
 import pkgutil
 
+from natsort import natsorted
+
 from .entities import (
     Migration,
     MigrationInfo,
     MigrationType,
     NewMigration,
 )
-
-from .errors import OperationError
 
 
 class MigrationsPackageRepo:
@@ -32,7 +32,9 @@ class MigrationsPackageRepo:
                 migrations = self._load_migrations(v, type_)
                 result.extend(migrations)
 
-        return result
+        return natsorted(
+            result, lambda m: (m.info.version, m.info.type_.value, m.info.name)
+        )
 
     @staticmethod
     def _load_migrations(version_path: str, type_: MigrationType) -> list[Migration]:
@@ -70,16 +72,11 @@ class MigrationsPackageRepo:
             version_dir.mkdir()
             (version_dir / "__init__.py").touch()
 
-        last_version = sorted(self.path.iterdir())[-1]
-        type_dir = last_version / migration.info.type_.name
+        type_dir = version_dir / migration.info.type_.name
 
         if not type_dir.exists():
             type_dir.mkdir()
             (type_dir / "__init__.py").touch()
 
         migration_path = type_dir / f"{migration.info.name}.py"
-
-        if migration_path.exists():
-            raise OperationError("A migration with this name already exists")
-
         migration_path.write_text(migration.code)
