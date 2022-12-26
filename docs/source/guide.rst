@@ -62,7 +62,7 @@ About migrations
 
 Migrations are just Python modules. Each migration must have a function named **run**.
 
-There are three types of migrations in **izbuska**:
+There are three types of migrations in **izbushka**:
 
 - **Schema migrations** to create new tables, add new columns, etc. These migrations are executed before migrations of other types.
 - **Data migrations** to populate tables or move data between them. These migrations are executed after schema migrations.
