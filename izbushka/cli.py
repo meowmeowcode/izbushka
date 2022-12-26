@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 import click
@@ -14,6 +15,12 @@ from .migrations_service import MigrationsService
 def init(migrations_package: str) -> None:
     with click.open_file("izbushka.yml", "w") as f:
         yaml.safe_dump({"migrations_package": migrations_package}, f)
+
+    path = Path(*migrations_package.split("."))
+
+    if not path.exists():
+        path.mkdir()
+        (path / "__init__.py").touch()
 
 
 def build_cmd(migrations_service: MigrationsService) -> Group:
