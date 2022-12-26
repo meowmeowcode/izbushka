@@ -18,15 +18,19 @@ __all__ = ("Column", "Query", "Table")
 
 class Query(_dialects.ClickHouseQuery):
     @classmethod
-    def create_table(cls, table: Union[Table, str]) -> _ClickHouseCreateQueryBuilder:
-        return _ClickHouseCreateQueryBuilder().create_table(table)
+    def create_table(cls, table: Union[Table, str]) -> ClickHouseCreateQueryBuilder:
+        """Entry point for the builder of a CREATE query.
+        Takes a name of a table to create."""
+        return ClickHouseCreateQueryBuilder().create_table(table)
 
     @classmethod
     def exchange_tables(cls, table1: str, table2: str) -> Query:
-        return _ClickHouseExchangeQueryBuilder().exchange_tables(table1, table2)
+        """Entry point for the builder of an EXCHANGE query.
+        Takes names of tables to exchange."""
+        return ClickHouseExchangeQueryBuilder().exchange_tables(table1, table2)
 
 
-class _ClickHouseCreateQueryBuilder(_dialects.CreateQueryBuilder):
+class ClickHouseCreateQueryBuilder(_dialects.CreateQueryBuilder):
     QUERY_CLS = Query
 
     def __init__(self) -> None:
@@ -38,7 +42,7 @@ class _ClickHouseCreateQueryBuilder(_dialects.CreateQueryBuilder):
         self._as_table: Optional[str] = None
 
     @_dialects.builder
-    def on_cluster(self, cluster: str) -> _ClickHouseCreateQueryBuilder:  # type: ignore
+    def on_cluster(self, cluster: str) -> ClickHouseCreateQueryBuilder:  # type: ignore
         if self._cluster:
             raise AttributeError("'CreateQuery' object already has attribute cluster")
         self._cluster = cluster
@@ -46,20 +50,20 @@ class _ClickHouseCreateQueryBuilder(_dialects.CreateQueryBuilder):
     @_dialects.builder
     def engine(  # type: ignore
         self, engine: str, *args: str
-    ) -> _ClickHouseCreateQueryBuilder:
+    ) -> ClickHouseCreateQueryBuilder:
         if self._engine:
             raise AttributeError("'CreateQuery' object already has attribute engine")
         self._engine = engine
         self._engine_params = args
 
     @_dialects.builder
-    def order_by(self, order: str) -> _ClickHouseCreateQueryBuilder:  # type: ignore
+    def order_by(self, order: str) -> ClickHouseCreateQueryBuilder:  # type: ignore
         if self._order_by:
             raise AttributeError("'CreateQuery' object already has attribute order_by")
         self._order_by = order
 
     @_dialects.builder
-    def as_table(self, table: str) -> _ClickHouseCreateQueryBuilder:  # type: ignore
+    def as_table(self, table: str) -> ClickHouseCreateQueryBuilder:  # type: ignore
         if self._as_table:
             raise AttributeError("'CreateQuery' object already has attribute as_table")
         self._as_table = table
@@ -104,7 +108,7 @@ class _ClickHouseCreateQueryBuilder(_dialects.CreateQueryBuilder):
         return query
 
 
-class _ClickHouseExchangeQueryBuilder:
+class ClickHouseExchangeQueryBuilder:
     def __init__(self) -> None:
         self._table1: Optional[str] = None
         self._table2: Optional[str] = None
@@ -115,14 +119,14 @@ class _ClickHouseExchangeQueryBuilder:
         self,
         table1: str,
         table2: str,
-    ) -> _ClickHouseExchangeQueryBuilder:
+    ) -> ClickHouseExchangeQueryBuilder:
         self._table1 = table1
         self._table2 = table2
 
     @_dialects.builder
     def on_cluster(  # type: ignore
         self, cluster: str
-    ) -> _ClickHouseExchangeQueryBuilder:
+    ) -> ClickHouseExchangeQueryBuilder:
         if self._cluster:
             raise AttributeError("'ExchangeQuery' object already has attribute cluster")
 

@@ -39,12 +39,18 @@ class Operations(Protocol):
 
     @property
     def client(self) -> Any:
+        """Client for interaction with ClickHouse.
+        Use this property when methods of the ``Operations``
+        class are not enough.
+        """
         ...
 
     def command(self, query: Union[str, sql.Query]) -> Union[str, int, Sequence[str]]:
+        """Query the database and get a result as a single value."""
         ...
 
     def query(self, query: Union[str, sql.Query]) -> Sequence[Sequence]:
+        """Query the database and get a result as a sequence of rows."""
         ...
 
     def insert(
@@ -53,4 +59,9 @@ class Operations(Protocol):
         data: Sequence[Sequence],
         column_names: Union[str, Iterable[str]] = "*",
     ) -> None:
+        """Insert a sequence of rows to a table.
+
+        :param table: Table to insert rows into.
+        :param data: Rows to insert.
+        :param column_names: Column names."""
         ...
