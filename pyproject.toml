@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "izbushka"
-version = "0.2.0"
+version = "0.2.1"
 description = ""
 authors = ["Anton Evdokimov <meowmeowcode@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.9"
 clickhouse-connect = "^0.4.1"
 PyPika = "^0.48.9"
 PyYAML = "<6"
